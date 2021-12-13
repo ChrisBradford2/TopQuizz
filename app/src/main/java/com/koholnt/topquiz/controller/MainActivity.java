@@ -1,4 +1,4 @@
-package com.koholnt.topquiz;
+package com.koholnt.topquiz.controller;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,6 +10,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.EditText;
 import android.os.Bundle;
+
+import com.koholnt.topquiz.R;
 
 public class MainActivity extends AppCompatActivity {
 

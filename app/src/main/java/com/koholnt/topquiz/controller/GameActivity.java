@@ -1,10 +1,12 @@
-package com.koholnt.topquiz;
+package com.koholnt.topquiz.controller;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.koholnt.topquiz.R;
 
 public class GameActivity extends AppCompatActivity {
 
