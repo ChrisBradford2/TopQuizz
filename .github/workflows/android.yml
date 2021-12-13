@@ -18,7 +18,12 @@ jobs:
           java-version: "11"
           distribution: "adopt"
           cache: gradle
-
+      - name: Cache SonarQube packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
@@ -27,3 +32,6 @@ jobs:
         run: ./gradlew test
       - name: Official SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v1.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
