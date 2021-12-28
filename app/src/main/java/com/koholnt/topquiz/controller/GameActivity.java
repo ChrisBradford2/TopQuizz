@@ -1,11 +1,14 @@
 package com.koholnt.topquiz.controller;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -28,6 +31,22 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     private int mRemainingQuestionCount;
     private int mScore;
     public static final String BUNDLE_EXTRA_SCORE = "BUNDLE_EXTRA_SCORE";
+    private boolean mEnableTouchEvents;
+    public static final String BUNDLE_STATE_SCORE = "BUNDLE_STATE_SCORE";
+    public static final String BUNDLE_STATE_QUESTION = "BUNDLE_STATE_QUESTION";
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        return mEnableTouchEvents && super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(BUNDLE_STATE_SCORE, mScore);
+        outState.putInt(BUNDLE_STATE_QUESTION, mRemainingQuestionCount);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +68,15 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         mCurentQuestion = mQuestionBank.getCurrentQuestion();
         displayQuestion(mCurentQuestion);
 
-        mRemainingQuestionCount = 4;
+        mEnableTouchEvents = true;
 
-        mScore = 0;
+        if (savedInstanceState != null){
+            mRemainingQuestionCount = savedInstanceState.getInt(BUNDLE_STATE_QUESTION);
+            mScore = savedInstanceState.getInt(BUNDLE_STATE_SCORE);
+        } else {
+            mRemainingQuestionCount = 4;
+            mScore = 0;
+        }
     }
 
     private void displayQuestion(final Question question) {
@@ -135,28 +160,40 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(this, "Wrong !", Toast.LENGTH_SHORT).show();
         }
 
-        mRemainingQuestionCount--;
+        mEnableTouchEvents = false;
 
-        if (mRemainingQuestionCount > 0){
-            mCurentQuestion = mQuestionBank.getNextQuestion();
-            displayQuestion(mCurentQuestion);
-        } else {
-            //No question left, end of the game
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mRemainingQuestionCount--;
 
-            builder.setTitle("Well done!")
-                    .setMessage("Your score is " + mScore)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent();
-                            intent.putExtra(BUNDLE_EXTRA_SCORE, mScore);
-                            setResult(RESULT_OK, intent);
-                            finish();
-                        }
-                    })
-                    .create()
-                    .show();
-        }
+                if (mRemainingQuestionCount > 0){
+                    mCurentQuestion = mQuestionBank.getNextQuestion();
+                    displayQuestion(mCurentQuestion);
+                } else {
+                    //No question left, end of the game
+                    endGame();
+                }
+                mEnableTouchEvents = true;
+            }
+        }, 2000);
+
+    }
+    private void endGame(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("Well done!")
+                .setMessage("Your score is " + mScore)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent();
+                        intent.putExtra(BUNDLE_EXTRA_SCORE, mScore);
+                        setResult(RESULT_OK, intent);
+                        finish();
+                    }
+                })
+                .create()
+                .show();
     }
 }
