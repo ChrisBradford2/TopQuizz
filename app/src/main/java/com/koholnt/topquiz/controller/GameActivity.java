@@ -3,7 +3,10 @@ package com.koholnt.topquiz.controller;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.koholnt.topquiz.R;
 import com.koholnt.topquiz.model.model.Question;
@@ -11,22 +14,42 @@ import com.koholnt.topquiz.model.model.QuestionBank;
 
 import java.util.Arrays;
 
-public class GameActivity extends AppCompatActivity {
+public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private TextView mTextView;
     private Button mGameButton1;
     private Button mGameButton2;
     private Button mGameButton3;
     private Button mGameButton4;
+    private Question mCurentQuestion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        mTextView = findViewById(R.id.game_activity_textview_question);
         mGameButton1 = findViewById(R.id.game_activity_button_1);
         mGameButton2 = findViewById(R.id.game_activity_button_2);
         mGameButton3 = findViewById(R.id.game_activity_button_3);
         mGameButton4 = findViewById(R.id.game_activity_button_4);
+
+        mTextView.setOnClickListener(this);
+        mGameButton1.setOnClickListener(this);
+        mGameButton2.setOnClickListener(this);
+        mGameButton3.setOnClickListener(this);
+        mGameButton4.setOnClickListener(this);
+
+        mCurentQuestion = mQuestionBank.getCurrentQuestion();
+        displayQuestion(mCurentQuestion);
+    }
+
+    private void displayQuestion(final Question question) {
+        mTextView.setText(question.getQuestion());
+        mGameButton1.setText(question.getChoiceList().get(0));
+        mGameButton2.setText(question.getChoiceList().get(1));
+        mGameButton3.setText(question.getChoiceList().get(2));
+        mGameButton4.setText(question.getChoiceList().get(3));
     }
 
     private final QuestionBank mQuestionBank = generateQuestions();
@@ -66,5 +89,28 @@ public class GameActivity extends AppCompatActivity {
         );
 
         return new QuestionBank(Arrays.asList(question1, question2, question3));
+    }
+
+    @Override
+    public void onClick(View v) {
+        int index;
+
+        if (v == mGameButton1) {
+            index = 0;
+        } else if (v == mGameButton2) {
+            index = 1;
+        } else if (v == mGameButton3) {
+            index = 2;
+        } else if (v == mGameButton4) {
+            index = 3;
+        } else {
+            throw new IllegalStateException("Unknown clicked view : " + v);
+        }
+
+        if (index == mQuestionBank.getCurrentQuestion().getAnswerIndex()) {
+            Toast.makeText(this, "Correct !", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Wrong !", Toast.LENGTH_SHORT).show();
+        }
     }
 }
