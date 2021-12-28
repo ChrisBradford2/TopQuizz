@@ -4,6 +4,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,14 +19,15 @@ import java.util.Arrays;
 
 public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private TextView mTextView;
-    private Button mGameButton1;
-    private Button mGameButton2;
-    private Button mGameButton3;
-    private Button mGameButton4;
-    private Question mCurentQuestion;
+    TextView mTextView;
+    Button mGameButton1;
+    Button mGameButton2;
+    Button mGameButton3;
+    Button mGameButton4;
+    Question mCurentQuestion;
     private int mRemainingQuestionCount;
     private int mScore;
+    public static final String BUNDLE_EXTRA_SCORE = "BUNDLE_EXTRA_SCORE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +98,18 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                 3
         );
 
-        return new QuestionBank(Arrays.asList(question1, question2, question3));
+        Question question4 = new Question(
+                "Lorsqu'un pancake tombe dans la glace avant le 31 décembre, on dit qu'il est ?",
+                Arrays.asList(
+                        "Tombé dans la glace avant le 31 décembre",
+                        "Un frizby comestible",
+                        "Une kipa surgelée",
+                        "La réponse 4"
+                ),
+                1
+        );
+
+        return new QuestionBank(Arrays.asList(question1, question2, question3, question4));
     }
 
     @Override
@@ -136,6 +149,9 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent();
+                            intent.putExtra(BUNDLE_EXTRA_SCORE, mScore);
+                            setResult(RESULT_OK, intent);
                             finish();
                         }
                     })
