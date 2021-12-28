@@ -24,7 +24,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //mPlayButton.setEnabled(false);
+        mGreetingTextView = findViewById(R.id.main_textview_greeting);
+        mNameEditText = findViewById(R.id.main_edittext_name);
+        mPlayButton = findViewById(R.id.main_button_play);
+
+        mPlayButton.setEnabled(false);
 
         mNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
