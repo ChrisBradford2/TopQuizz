@@ -1,9 +1,11 @@
 package com.koholnt.topquiz.controller;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,22 +24,58 @@ import java.util.Arrays;
 
 public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
-    TextView mTextView;
-    Button mGameButton1;
-    Button mGameButton2;
-    Button mGameButton3;
-    Button mGameButton4;
-    Question mCurentQuestion;
-    private int mRemainingQuestionCount;
+    public static final String RESULT_SCORE = "RESULT_SCORE";
+
+    private static final String BUNDLE_STATE_SCORE = "BUNDLE_STATE_SCORE";
+    private static final String BUNDLE_STATE_QUESTION_COUNT = "BUNDLE_STATE_QUESTION_COUNT";
+    private static final String BUNDLE_STATE_QUESTION_BANK = "BUNDLE_STATE_QUESTION_BANK";
+
+    private static final int INITIAL_QUESTION_COUNT = 4;
+
+    private TextView mTextViewQuestion;
+    private Button mAnswerButton1;
+    private Button mAnswerButton2;
+    private Button mAnswerButton3;
+    private Button mAnswerButton4;
+
     private int mScore;
-    public static final String BUNDLE_EXTRA_SCORE = "BUNDLE_EXTRA_SCORE";
+    private int mRemainingQuestionCount;
+    private QuestionBank mQuestionBank;
+
     private boolean mEnableTouchEvents;
-    public static final String BUNDLE_STATE_SCORE = "BUNDLE_STATE_SCORE";
-    public static final String BUNDLE_STATE_QUESTION = "BUNDLE_STATE_QUESTION";
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        return mEnableTouchEvents && super.dispatchTouchEvent(ev);
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_game);
+
+        mEnableTouchEvents = true;
+
+        mTextViewQuestion = findViewById(R.id.game_activity_textview_question);
+        mAnswerButton1 = findViewById(R.id.game_activity_button_1);
+        mAnswerButton2 = findViewById(R.id.game_activity_button_2);
+        mAnswerButton3 = findViewById(R.id.game_activity_button_3);
+        mAnswerButton4 = findViewById(R.id.game_activity_button_4);
+
+        // Use the same listener for the four buttons.
+        // The view id value will be used to distinguish the button triggered
+        mAnswerButton1.setOnClickListener(this);
+        mAnswerButton2.setOnClickListener(this);
+        mAnswerButton3.setOnClickListener(this);
+        mAnswerButton4.setOnClickListener(this);
+
+        if (savedInstanceState != null) {
+            mScore = savedInstanceState.getInt(BUNDLE_STATE_SCORE);
+            mRemainingQuestionCount = savedInstanceState.getInt(BUNDLE_STATE_QUESTION_COUNT);
+            mQuestionBank = (QuestionBank) savedInstanceState.getSerializable(BUNDLE_STATE_QUESTION_BANK);
+        } else {
+            mScore = 0;
+            mRemainingQuestionCount = INITIAL_QUESTION_COUNT;
+            mQuestionBank = generateQuestionBank();
+        }
+
+        displayQuestion(mQuestionBank.getCurrentQuestion());
     }
 
     @Override
@@ -45,64 +83,99 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         super.onSaveInstanceState(outState);
 
         outState.putInt(BUNDLE_STATE_SCORE, mScore);
-        outState.putInt(BUNDLE_STATE_QUESTION, mRemainingQuestionCount);
+        outState.putInt(BUNDLE_STATE_QUESTION_COUNT, mRemainingQuestionCount);
+        outState.putSerializable(BUNDLE_STATE_QUESTION_BANK, mQuestionBank);
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game);
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        return mEnableTouchEvents && super.dispatchTouchEvent(ev);
+    }
 
-        mTextView = findViewById(R.id.game_activity_textview_question);
-        mGameButton1 = findViewById(R.id.game_activity_button_1);
-        mGameButton2 = findViewById(R.id.game_activity_button_2);
-        mGameButton3 = findViewById(R.id.game_activity_button_3);
-        mGameButton4 = findViewById(R.id.game_activity_button_4);
+    @Override
+    public void onClick(View v) {
+        int index;
 
-        mTextView.setOnClickListener(this);
-        mGameButton1.setOnClickListener(this);
-        mGameButton2.setOnClickListener(this);
-        mGameButton3.setOnClickListener(this);
-        mGameButton4.setOnClickListener(this);
-
-        mCurentQuestion = mQuestionBank.getCurrentQuestion();
-        displayQuestion(mCurentQuestion);
-
-        mEnableTouchEvents = true;
-
-        if (savedInstanceState != null){
-            mRemainingQuestionCount = savedInstanceState.getInt(BUNDLE_STATE_QUESTION);
-            mScore = savedInstanceState.getInt(BUNDLE_STATE_SCORE);
+        if (v == mAnswerButton1) {
+            index = 0;
+        } else if (v == mAnswerButton2) {
+            index = 1;
+        } else if (v == mAnswerButton3) {
+            index = 2;
+        } else if (v == mAnswerButton4) {
+            index = 3;
         } else {
-            mRemainingQuestionCount = 4;
-            mScore = 0;
+            throw new IllegalStateException("Unknown clicked view : " + v);
         }
+
+        if (index == mQuestionBank.getCurrentQuestion().getAnswerIndex()) {
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+            mScore++;
+        } else {
+            Toast.makeText(this, "Incorrect!", Toast.LENGTH_SHORT).show();
+        }
+
+        mEnableTouchEvents = false;
+
+        new Handler(getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mEnableTouchEvents = true;
+
+                mRemainingQuestionCount--;
+
+                if (mRemainingQuestionCount <= 0) {
+                    endGame();
+                } else {
+                    displayQuestion(mQuestionBank.getNextQuestion());
+                }
+            }
+        }, 2000);
     }
 
     private void displayQuestion(final Question question) {
-        mTextView.setText(question.getQuestion());
-        mGameButton1.setText(question.getChoiceList().get(0));
-        mGameButton2.setText(question.getChoiceList().get(1));
-        mGameButton3.setText(question.getChoiceList().get(2));
-        mGameButton4.setText(question.getChoiceList().get(3));
+        // Set the text for the question text view and the four buttons
+        mTextViewQuestion.setText(question.getQuestion());
+        mAnswerButton1.setText(question.getChoiceList().get(0));
+        mAnswerButton2.setText(question.getChoiceList().get(1));
+        mAnswerButton3.setText(question.getChoiceList().get(2));
+        mAnswerButton4.setText(question.getChoiceList().get(3));
     }
 
-    private final QuestionBank mQuestionBank = generateQuestions();
+    private void endGame() {
+        // No question left, end the game
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-    private QuestionBank generateQuestions(){
+        builder.setTitle("Well done!")
+                .setMessage("Your score is " + mScore)
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent();
+                        intent.putExtra(RESULT_SCORE, mScore);
+                        setResult(Activity.RESULT_OK, intent);
+                        finish();
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    private QuestionBank generateQuestionBank() {
         Question question1 = new Question(
-                "Who is the creator of Android?",
+                "Quel célèbre dictateur dirigea l’URSS du milieu des années 1920 à 1953 ?",
                 Arrays.asList(
-                        "Andy Rubin",
-                        "Steve Wozniak",
-                        "Jake Wharton",
-                        "Paul Smith"
+                        "Staline",
+                        "Molotov",
+                        "Lénine",
+                        "Trotski"
                 ),
                 0
         );
 
         Question question2 = new Question(
-                "When did the first man land on the moon?",
+                "Quand le premier homme a-t-il atterri sur la lune ?",
                 Arrays.asList(
                         "1958",
                         "1962",
@@ -113,87 +186,38 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         );
 
         Question question3 = new Question(
-                "What is the house number of The Simpsons?",
+                "Qui a dit : « Le sort en est jeté » (Alea jacta est) ?",
                 Arrays.asList(
-                        "42",
-                        "101",
-                        "666",
-                        "742"
+                        "Auguste",
+                        "Attila",
+                        "Vercingétorix",
+                        "César"
                 ),
                 3
         );
 
         Question question4 = new Question(
-                "Lorsqu'un pancake tombe dans la glace avant le 31 décembre, on dit qu'il est ?",
+                "Qui à remporté le champinnat du monde de Formule 1 en 1997 ?",
                 Arrays.asList(
-                        "Tombé dans la glace avant le 31 décembre",
-                        "Un frizby comestible",
-                        "Une kipa surgelée",
-                        "La réponse 4"
+                        "Ayrton Senna",
+                        "David Coulthard",
+                        "Jacques Villeneuve",
+                        "Michael Schumacher"
                 ),
                 1
         );
 
-        return new QuestionBank(Arrays.asList(question1, question2, question3, question4));
-    }
+        Question question5 = new Question(
+                "En quelle année fût créée la Jonconde ?",
+                Arrays.asList(
+                        "1498",
+                        "1503",
+                        "1507",
+                        "1514"
+                ),
+                1
+        );
 
-    @Override
-    public void onClick(View v) {
-        int index;
-
-        if (v == mGameButton1) {
-            index = 0;
-        } else if (v == mGameButton2) {
-            index = 1;
-        } else if (v == mGameButton3) {
-            index = 2;
-        } else if (v == mGameButton4) {
-            index = 3;
-        } else {
-            throw new IllegalStateException("Unknown clicked view : " + v);
-        }
-
-        if (index == mQuestionBank.getCurrentQuestion().getAnswerIndex()) {
-            Toast.makeText(this, "Correct !", Toast.LENGTH_SHORT).show();
-            mScore++;
-        } else {
-            Toast.makeText(this, "Wrong !", Toast.LENGTH_SHORT).show();
-        }
-
-        mEnableTouchEvents = false;
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mRemainingQuestionCount--;
-
-                if (mRemainingQuestionCount > 0){
-                    mCurentQuestion = mQuestionBank.getNextQuestion();
-                    displayQuestion(mCurentQuestion);
-                } else {
-                    //No question left, end of the game
-                    endGame();
-                }
-                mEnableTouchEvents = true;
-            }
-        }, 2000);
-
-    }
-    private void endGame(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setTitle("Well done!")
-                .setMessage("Your score is " + mScore)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent();
-                        intent.putExtra(BUNDLE_EXTRA_SCORE, mScore);
-                        setResult(RESULT_OK, intent);
-                        finish();
-                    }
-                })
-                .create()
-                .show();
+        return new QuestionBank(Arrays.asList(question1, question2, question3, question4, question5));
     }
 }
