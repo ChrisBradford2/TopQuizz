@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1019527893834",
+    "project_id": "topquizz-70a3a",
+    "storage_bucket": "topquizz-70a3a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019527893834:android:4463d0735b20351775a7b3",
+        "android_client_info": {
+          "package_name": "com.koholnt.topquiz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019527893834-dj2fja6s8t3u9h55vvv550jfr8f903lr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcUoRuazMF6djPnIhcygCh-hwmfqBESG4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019527893834-dj2fja6s8t3u9h55vvv550jfr8f903lr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
